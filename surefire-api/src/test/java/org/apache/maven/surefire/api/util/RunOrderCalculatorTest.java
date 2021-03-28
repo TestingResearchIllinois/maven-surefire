@@ -21,6 +21,9 @@ package org.apache.maven.surefire.api.util;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import org.apache.maven.surefire.api.testset.RunOrderParameters;
 
@@ -58,5 +61,45 @@ public class RunOrderCalculatorTest
     static class B
     {
 
+    }
+
+    public void reverseAlphabeticalRunOrderTestClasses()
+    {
+        getClassesToRun();
+        TestsToRun testsToRun = new TestsToRun( getClassesToRun() );
+        RunOrderParameters runOrderParameters = new RunOrderParameters( "reversealphabetical" , null );
+        RunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
+        final TestsToRun testsToRun1 = runOrderCalculator.orderTestClasses( testsToRun );
+        assertEquals( B.class, testsToRun1.iterator().next() );
+    }
+
+    public void reverseAlphabeticalRunOrderTestMethods()
+    {
+        RunOrderParameters runOrderParameters = new RunOrderParameters( "reversealphabetical" , null );
+        RunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
+        System.setProperty( "test", "org.apache.maven.surefire.api.util.RunOrderCalculatorTest$B#C,org.apache.maven.surefire.api.util.RunOrderCalculatorTest$B#D,org.apache.maven.surefire.api.util.RunOrderCalculatorTest$A#A,org.apache.maven.surefire.api.util.RunOrderCalculatorTest$A#B" );
+        Comparator<String> reverseAlphabeticalRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
+        List<String> list = new ArrayList<String>();
+        list.add( "org.apache.maven.surefire.api.util.RunOrderCalculatorTest$B#A" );
+        list.add( "org.apache.maven.surefire.api.util.RunOrderCalculatorTest$B#B" );
+        list.add( "org.apache.maven.surefire.api.util.RunOrderCalculatorTest$A#C" );
+        list.add( "org.apache.maven.surefire.api.util.RunOrderCalculatorTest$A#D" );
+        list.sort( reverseAlphabeticalRunOrderComparator );
+        assertEquals( list.get(0), "org.apache.maven.surefire.api.util.RunOrderCalculatorTest$B#B" );
+    }
+
+    public void shouldThrowExceptionForNullTestMethod()
+    {
+        RunOrderParameters runOrderParameters = new RunOrderParameters( "reversealphabetical" , null );
+        RunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
+        System.clearProperty( "test" );
+        try
+        {
+            runOrderCalculator.comparatorForTestMethods();
+        }
+        catch ( IllegalStateException expected )
+        {
+            assertEquals( expected.getMessage(), "Please set system property -Dtest to use fixed order" );
+        }
     }
 }

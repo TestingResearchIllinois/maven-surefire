@@ -93,7 +93,60 @@ public class DefaultRunOrderCalculator
             throw new IllegalStateException( "Unsupported number of runOrders. Expected 1. Got: " + runOrder.length );
         }
         RunOrder methodRunOrder = runOrder[0];
-        if ( RunOrder.TESTORDER.equals( methodRunOrder ) )
+        if ( RunOrder.REVERSE_ALPHABETICAL.equals( methodRunOrder ) )
+        {
+            String orderParam = parseTestOrder( System.getProperty( "test" ) );
+            if ( orderParam == null )
+            {
+                throw new IllegalStateException( "Please set system property -Dtest to use fixed order" );
+            }
+            final LinkedHashMap<String, List<String>> orders = new LinkedHashMap<>();
+            for ( String s : orderParam.split( ","  ) )
+            {
+                String[] nameSplit = s.split( "#" );
+                String className = nameSplit[0];
+                String testName = nameSplit[1];
+                String parenName = testName + "(" + className + ")";
+                addTestToOrders( className, orders, parenName );
+            }
+            return new Comparator<String>()
+            {
+
+                @Override
+                public int compare( String o1, String o2 )
+                {
+                    String className1 = o1;
+                    String testName1 = o1;
+                    if ( o1.contains( "(" ) )
+                    {
+                         String[] nameSplit1 = o1.split( "\\(" );
+                         className1 = nameSplit1[1].substring( 0, nameSplit1[1].length() - 1 );
+                         testName1 = nameSplit1[0];
+                         addTestToOrders( className1, orders, o1 );
+                    }
+
+                    String className2 = o2;
+                    String testName2 = o2;
+                    if ( o2.contains( "(" ) )
+                    {
+                        String[] nameSplit2 = o2.split( "\\(" );
+                        className2 = nameSplit2[1].substring( 0, nameSplit2[1].length() - 1 );
+                        testName2 = nameSplit2[0];
+                        addTestToOrders( className2, orders, o2 );
+                    }
+
+                    if ( ! className2.equals( className1 ) )
+                    {
+                        return className2.compareTo( className1 );
+                    }
+                    else
+                    {
+                        return testName2.compareTo( testName1 );
+                    }
+                }
+            };
+        }
+        else if ( RunOrder.TESTORDER.equals( methodRunOrder ) )
         {
             String orderParam = parseTestOrder( System.getProperty( "test" ) );
             if ( orderParam == null )
