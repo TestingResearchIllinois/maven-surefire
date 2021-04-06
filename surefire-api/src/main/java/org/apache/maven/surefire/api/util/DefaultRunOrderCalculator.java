@@ -20,13 +20,16 @@ package org.apache.maven.surefire.api.util;
  */
 
 import org.apache.maven.surefire.api.runorder.RunEntryStatisticsMap;
+import org.apache.maven.surefire.api.testset.ResolvedTest;
 import org.apache.maven.surefire.api.testset.RunOrderParameters;
+import org.apache.maven.surefire.api.testset.TestListResolver;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,6 +39,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Applies the final runorder of the tests
@@ -100,15 +104,10 @@ public class DefaultRunOrderCalculator
             {
                 throw new IllegalStateException( "Please set system property -Dtest to use fixed order" );
             }
-            final LinkedHashMap<String, List<String>> orders = new LinkedHashMap<>();
-            for ( String s : orderParam.split( "," ) )
-            {
-                String[] nameSplit = s.split( "#" );
-                String className = nameSplit[0];
-                String testName = nameSplit[1];
-                String parenName = testName + "(" + className + ")";
-                addTestToOrders( className, orders, parenName );
-            }
+
+            List<String> list = Arrays.asList( orderParam.split( "," ) );
+            final TestListResolver testListResolver = new TestListResolver( list );
+
             return new Comparator<String>()
             {
 
@@ -116,25 +115,26 @@ public class DefaultRunOrderCalculator
                 public int compare( String o1, String o2 )
                 {
                     String className1 = o1;
+                    String methodName1 = o1;
                     if ( o1.contains( "(" ) )
                     {
                         String[] nameSplit1 = o1.split( "\\(" );
                         className1 = nameSplit1[1].substring( 0, nameSplit1[1].length() - 1 );
-                        addTestToOrders( className1, orders, o1 );
+                        methodName1 = nameSplit1[0];
                     }
 
                     String className2 = o2;
+                    String methodName2 = o2;
                     if ( o2.contains( "(" ) )
                     {
                         String[] nameSplit2 = o2.split( "\\(" );
                         className2 = nameSplit2[1].substring( 0, nameSplit2[1].length() - 1 );
-                        addTestToOrders( className2, orders, o2 );
+                        methodName2 = nameSplit2[0];
                     }
 
                     if ( ! className2.equals( className1 ) )
                     {
-                        List<String> classOrders = new ArrayList<String>( orders.keySet() );
-                        if ( classOrders.indexOf( className1 ) < classOrders.indexOf( className2 ) )
+                        if ( testListResolver.testOrderClassComparator( className1, className2 ) == className2 )
                         {
                             return -1;
                         }
@@ -145,8 +145,7 @@ public class DefaultRunOrderCalculator
                     }
                     else
                     {
-                        List<String> testOrders = orders.get( className2 );
-                        if ( testOrders.indexOf( o1 ) < testOrders.indexOf( o2 ) )
+                        if ( testListResolver.testOrderMethodComparator( methodName1, methodName2, className1 ) == methodName2 )
                         {
                             return -1;
                         }

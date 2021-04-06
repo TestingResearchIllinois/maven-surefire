@@ -22,8 +22,11 @@ package org.apache.maven.surefire.api.testset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static java.util.Collections.unmodifiableSet;
 import static org.apache.maven.surefire.shared.utils.StringUtils.isBlank;
@@ -31,9 +34,11 @@ import static org.apache.maven.surefire.shared.utils.StringUtils.isNotBlank;
 import static org.apache.maven.surefire.shared.utils.StringUtils.split;
 import static org.apache.maven.surefire.shared.utils.io.SelectorUtils.PATTERN_HANDLER_SUFFIX;
 import static org.apache.maven.surefire.shared.utils.io.SelectorUtils.REGEX_HANDLER_PREFIX;
+import static org.apache.maven.surefire.shared.utils.io.SelectorUtils.matchPath;
 import static java.util.Collections.singleton;
 import static org.apache.maven.surefire.api.testset.ResolvedTest.Type.CLASS;
 import static org.apache.maven.surefire.api.testset.ResolvedTest.Type.METHOD;
+import static java.util.regex.Pattern.compile;
 
 // TODO In Surefire 3.0 see SUREFIRE-1309 and use normal fully qualified class name regex instead.
 /**
@@ -513,5 +518,121 @@ public class TestListResolver
             }
         }
         return false;
+    }
+
+    private boolean methodMatchCheck( ResolvedTest includedPattern, String methodName )
+    {
+        MethodMatcher methodMatcher = new MethodMatcher();
+        return methodMatcher.matchMethodName( includedPattern, methodName );
+    }
+
+    private String findMatchedMethodPattern( String methodName )
+    {
+        String matchedPattern = new String("");
+        for ( ResolvedTest includedPattern : this.includedPatterns )
+        {
+            if ( methodMatchCheck( includedPattern, methodName ) )
+            {
+                matchedPattern = includedPattern.getTestMethodPattern();
+                break;
+            }
+        }
+        return matchedPattern;
+    }
+
+    public String testOrderMethodComparator( String methodName1, String methodName2, String className )
+    {
+        String classFileName = toClassFileName( className );
+        boolean shouldRunMethodName1 = shouldRun( classFileName , methodName1 );
+        boolean shouldRunMethodName2 = shouldRun( classFileName , methodName2 );
+        if ( ! shouldRunMethodName1 )
+        {
+            return methodName2;
+        }
+        if ( ! shouldRunMethodName2 )
+        {
+            return methodName1;
+        }
+
+        List<String> methodOrders = generateIncludedMethodList();
+        String matchedPattern1 = findMatchedMethodPattern( methodName1 );
+        String matchedPattern2 = findMatchedMethodPattern( methodName2 );
+
+        if ( methodOrders.indexOf( matchedPattern1 ) < methodOrders.indexOf( matchedPattern2 ) )
+        {
+            return methodName2;
+        }
+        else
+        {
+            return methodName1;
+        }
+    }
+
+    public String testOrderClassComparator( String className1, String className2 )
+    {
+        List<String> classOrders = generateIncludedClassList();
+        if ( classOrders.indexOf( className1 ) < classOrders.indexOf( className2 ) )
+        {
+            return className2;
+        }
+        else
+        {
+            return className1;
+        }
+    }
+
+    public List<String> generateIncludedMethodList()
+    {
+        List<String> methodOrders = new ArrayList<String>();
+        for ( ResolvedTest includedFilter : getIncludedPatterns() )
+        {
+            if ( includedFilter.hasTestMethodPattern() )
+            {
+                methodOrders.add( includedFilter.getTestMethodPattern() );
+            }
+        }
+        return methodOrders;
+    }
+
+    public List<String> generateIncludedClassList()
+    {
+        List<String> classOrders = new ArrayList<String>();
+        for ( ResolvedTest includedFilter : getIncludedPatterns() )
+        {
+            if ( includedFilter.hasTestClassPattern() )
+            {
+                classOrders.add( includedFilter.getTestClassPattern() );
+            }
+        }
+        return classOrders;
+    }
+
+    private final class MethodMatcher
+    {
+        private volatile Pattern cache;
+
+        boolean matchMethodName( ResolvedTest includedPattern, String methodName )
+        {
+            if ( includedPattern.isRegexTestMethodPattern() )
+            {
+                fetchCache( includedPattern );
+                return cache.matcher( methodName ).matches();
+            }
+            else
+            {
+                return matchPath( includedPattern.getTestMethodPattern(), methodName );
+            }
+        }
+
+        private void fetchCache(ResolvedTest includedPattern)
+        {
+            if ( cache == null )
+            {
+                int from = REGEX_HANDLER_PREFIX.length();
+                int to = includedPattern.getTestMethodPattern().length() - PATTERN_HANDLER_SUFFIX.length();
+                String pattern = includedPattern.getTestMethodPattern().substring( from, to );
+                cache = compile( pattern );
+            }
+        }
     }
 }
