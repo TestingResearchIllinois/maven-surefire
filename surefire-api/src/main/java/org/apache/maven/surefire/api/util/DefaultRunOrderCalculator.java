@@ -39,7 +39,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Applies the final runorder of the tests
@@ -132,28 +131,8 @@ public class DefaultRunOrderCalculator
                         methodName2 = nameSplit2[0];
                     }
 
-                    if ( ! className2.equals( className1 ) )
-                    {
-                        if ( testListResolver.testOrderClassComparator( className1, className2 ) == className2 )
-                        {
-                            return -1;
-                        }
-                        else
-                        {
-                            return 1;
-                        }
-                    }
-                    else
-                    {
-                        if ( testListResolver.testOrderMethodComparator( methodName1, methodName2, className1 ) == methodName2 )
-                        {
-                            return -1;
-                        }
-                        else
-                        {
-                            return 1;
-                        }
-                    }
+                    return testListResolver.testOrderComparator( className1, className2, methodName1, methodName2 );
+        
                 }
             };
         }
