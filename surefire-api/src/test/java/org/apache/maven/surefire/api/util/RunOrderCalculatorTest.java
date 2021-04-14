@@ -64,64 +64,55 @@ public class RunOrderCalculatorTest
 
     }
 
-    public void testOrderTestMethodsNonRegex()
+    static class DubboLazyConnectTest
     {
-        List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "DubboLazyConnectTest#testa2d" );
-        orderParamList.add( "DubboLazyConnectTest#testabc" );
-        orderParamList.add( "DubboLazyConnectTest#testa1b" );
-        orderParamList.add( "DubboProtocolTest#testa1b" );
-        orderParamList.add( "DubboProtocolTest#testaBc" );
-        TestListResolver testListResolver = new TestListResolver( orderParamList );
-        String className = "DubboLazyConnectTest";
-        String className2 = "DubboProtocolTest";
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa2d", "testa1b" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa2d", "testabc" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa1b", "testabc" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa2d", "testaBc" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa3d", "testa1b" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, "testa2d", "testa1b" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className2, className, "testaBc", "testa1b" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, "testa3d", "testa1b" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, "testa2d", "testabc" ), 1 );
+
     }
 
-    public void testOrderTestMethodsRegexNoneWrap()
+    public void testOrderTestClasses2()
     {
-        List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "DubboLazyConnectTest#testa?c" );
-        orderParamList.add( "DubboLazyConnectTest#testa?b" );
-        orderParamList.add( "DubboProtocolTest#test?1*" );
-        orderParamList.add( "!DubboLazyConnectTest#testa4b" );
-        orderParamList.add( "!DubboProtocolTest#test11MyTest" );
-        TestListResolver testListResolver = new TestListResolver( orderParamList );
-        String className = "DubboLazyConnectTest";
-        String className2 = "DubboProtocolTest";
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testabc", "testa1b" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testaBc", "testa2b" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa1b", "testa3c" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa1b", "testa4b" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa4b", "testabc" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, "testa1b", "test1123" ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className2, className, "testa1b", "testa1b" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className2, className2, "testa1b", "test1123" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className2, className2, "test1123", "test11MyTest" ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className2, className2, "test11MyTest", "test456" ), -1 );
+        RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
+        System.setProperty( "test", "DubboLazyConnectTest#a2d,DubboLazyConnectTest#aBc,DubboLazyConnectTest#abc,DubboLazyConnectTest#a1b" );
+        DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
+        Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
+        List<String> list = new ArrayList<String>();
+        list.add( "abc(DubboLazyConnectTest)" );
+        list.add( "a1b(DubboLazyConnectTest)" );
+        list.add( "a2d(DubboLazyConnectTest)" );
+        list.add( "aBc(DubboLazyConnectTest)" );
+        list.sort( testOrderRunOrderComparator );
+        assertEquals( list.get( 0 ), "a2d(DubboLazyConnectTest)" );
     }
 
-    public void testOrderTestClassesRegexNoneWrap()
+    public void testOrderTestClasses3()
     {
-        List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "DubboLazy2*Test.java" );
-        orderParamList.add( "???DubboLazy1*Test" );
-        orderParamList.add( "!abcDubboLazy1PeaceTest" );
-        TestListResolver testListResolver = new TestListResolver( orderParamList );
-        String className = "DubboLazy2ConnectTest";
-        String className2 = "456DubboLazy1ConnectTest";
-        String className3 = "abcDubboLazy1PeaceTest";
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, null, null ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className2, className, null, null  ), 1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className3, className2, null, null ), -1 );
-        assertEquals( ( int ) testListResolver.testOrderComparator( className, className3, null, null ), 1 );
+        RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
+        System.setProperty( "test", "DubboProtocolTest#a2d,DubboLazyConnectTest#aBc,DubboLazyConnectTest#abc,DubboLazyConnectTest#a1b" );
+        DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
+        Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
+        List<String> list = new ArrayList<String>();
+        list.add( "abc(DubboLazyConnectTest)" );
+        list.add( "a1b(DubboLazyConnectTest)" );
+        list.add( "a2d(DubboProtocolTest)" );
+        list.add( "aBc(DubboLazyConnectTest)" );
+        list.sort( testOrderRunOrderComparator );
+        assertEquals( list.get( 0 ), "a2d(DubboProtocolTest)" );
+    }
+
+    public void testOrderTestClasses4()
+    {
+        RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
+        System.setProperty( "test", "Dubbo*Test#a?c,My???Test#test*" );
+        DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
+        Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
+        List<String> list = new ArrayList<String>();
+        list.add( "abc(DubboLazyConnectTest)" );
+        list.add( "testabc(MyabcTest)" );
+        list.add( "a2c(DubboProtocolTest)" );
+        list.add( "testefg(MyefgTest)" );
+        list.add( "aBc(DubboLazyConnectTest)" );
+        list.sort( testOrderRunOrderComparator );
+        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 0 ) )[0].substring( 0,5 ), "Dubbo" );
+        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 3 ) )[0].substring( 0,2 ), "My" );
     }
 }

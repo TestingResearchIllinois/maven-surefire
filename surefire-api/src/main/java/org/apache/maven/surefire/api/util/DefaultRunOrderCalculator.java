@@ -58,6 +58,8 @@ public class DefaultRunOrderCalculator
 
     private final Random random;
 
+    private final TestListResolver testListResolver;
+
     public DefaultRunOrderCalculator( RunOrderParameters runOrderParameters, int threadCount )
     {
         this.runOrderParameters = runOrderParameters;
@@ -71,6 +73,7 @@ public class DefaultRunOrderCalculator
             runOrderParameters.setRunOrderRandomSeed( runOrderRandomSeed );
         }
         this.random = new Random( runOrderRandomSeed );
+        this.testListResolver = getTestListResolver();
     }
 
     @Override
@@ -98,41 +101,20 @@ public class DefaultRunOrderCalculator
         RunOrder methodRunOrder = runOrder[0];
         if ( RunOrder.TESTORDER.equals( methodRunOrder ) )
         {
-            String orderParam = parseTestOrder( System.getProperty( "test" ) );
-            if ( orderParam == null )
-            {
-                throw new IllegalStateException( "Please set system property -Dtest to use fixed order" );
-            }
-
-            List<String> list = Arrays.asList( orderParam.split( "," ) );
-            final TestListResolver testListResolver = new TestListResolver( list );
-
             return new Comparator<String>()
             {
 
                 @Override
                 public int compare( String o1, String o2 )
                 {
-                    String className1 = o1;
-                    String methodName1 = o1;
-                    if ( o1.contains( "(" ) )
-                    {
-                        String[] nameSplit1 = o1.split( "\\(" );
-                        className1 = nameSplit1[1].substring( 0, nameSplit1[1].length() - 1 );
-                        methodName1 = nameSplit1[0];
-                    }
-
-                    String className2 = o2;
-                    String methodName2 = o2;
-                    if ( o2.contains( "(" ) )
-                    {
-                        String[] nameSplit2 = o2.split( "\\(" );
-                        className2 = nameSplit2[1].substring( 0, nameSplit2[1].length() - 1 );
-                        methodName2 = nameSplit2[0];
-                    }
+                    String[] classAndMethod1 = getClassAndMethod( o1 );
+                    String className1 = classAndMethod1[0];
+                    String methodName1 = classAndMethod1[1];
+                    String[] classAndMethod2 = getClassAndMethod( o2 );
+                    String className2 = classAndMethod2[0];
+                    String methodName2 = classAndMethod2[1];
 
                     return testListResolver.testOrderComparator( className1, className2, methodName1, methodName2 );
-        
                 }
             };
         }
@@ -159,14 +141,41 @@ public class DefaultRunOrderCalculator
         }
     }
 
+    public TestListResolver getTestListResolver()
+    {
+        String orderParam = parseTestOrder( System.getProperty( "test" ) );
+        if ( orderParam == null  )
+        {
+            throw new IllegalStateException( "Please set system property -Dtest to use fixed order"  );
+        }
+        List<String> list = Arrays.asList( orderParam.split( "," ) );
+        return new TestListResolver( list );
+    }
+
+    public String[] getClassAndMethod( String request )
+    {
+        String[] classAndMethod = { request, request };
+        if ( request.contains( "(" ) )
+        {
+            String[] nameSplit1 = request.split( "\\(" );
+            classAndMethod[0] = nameSplit1[1].substring( 0, nameSplit1[1].length() - 1 );
+            classAndMethod[1] = nameSplit1[0];
+        }
+        return classAndMethod;
+    }
+
     private void orderTestClasses( List<Class<?>> testClasses, RunOrder runOrder )
     {
         if ( RunOrder.TESTORDER.equals( runOrder ) )
         {
-            List<Class<?>> sorted
-                = sortClassesBySpecifiedOrder( testClasses, parseTestOrder( System.getProperty( "test" ) ) );
-            testClasses.clear();
-            testClasses.addAll( sorted );
+            Collections.sort( testClasses, new Comparator<Class<?>>()
+                    {
+                        @Override
+                        public int compare( Class<?> o1, Class<?> o2 )
+                        {
+                            return testListResolver.testOrderComparator( o1.getName(), o2.getName(), null, null );
+                        }
+                    });
         }
         else if ( RunOrder.RANDOM.equals( runOrder ) )
         {
