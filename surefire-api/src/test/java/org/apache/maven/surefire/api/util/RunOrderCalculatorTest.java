@@ -19,11 +19,12 @@ package org.apache.maven.surefire.api.util;
  * under the License.
  */
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.maven.surefire.api.testset.RunOrderParameters;
 import org.apache.maven.surefire.api.testset.TestListResolver;
@@ -69,50 +70,47 @@ public class RunOrderCalculatorTest
 
     }
 
-    public void testOrderTestClasses2()
+    public void testOrderTestMethods()
     {
         RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
-        System.setProperty( "test", "DubboLazyConnectTest#a2d,DubboLazyConnectTest#aBc,DubboLazyConnectTest#abc,DubboLazyConnectTest#a1b" );
+        System.setProperty( "test", "MyGoodTest#a2d,MyGoodTest#aBc,MyGoodTest#abc,MyGoodTest#a1b" );
         DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
         Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
-        List<String> list = new ArrayList<String>();
-        list.add( "abc(DubboLazyConnectTest)" );
-        list.add( "a1b(DubboLazyConnectTest)" );
-        list.add( "a2d(DubboLazyConnectTest)" );
-        list.add( "aBc(DubboLazyConnectTest)" );
+        String[] strArray = { "abc(MyGoodTest)", "a1b(MyGoodTest)", "a2d(MyGoodTest)", "aBc(MyGoodTest)" };
+        List<String> list = Arrays.asList( strArray );
         list.sort( testOrderRunOrderComparator );
-        assertEquals( list.get( 0 ), "a2d(DubboLazyConnectTest)" );
+        String[] strArray2 = { "a2d(MyGoodTest)", "aBc(MyGoodTest)", "abc(MyGoodTest)", "a1b(MyGoodTest)" };
+        List<String> list2 = Arrays.asList( strArray2 );
+        assertEquals( list, list2 );
     }
 
-    public void testOrderTestClasses3()
+    public void testOrderTestClassesAndMethods()
     {
         RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
-        System.setProperty( "test", "DubboProtocolTest#a2d,DubboLazyConnectTest#aBc,DubboLazyConnectTest#abc,DubboLazyConnectTest#a1b" );
+        System.setProperty( "test", "MyBadTest#a2d,MyGoodTest#aBc,MyGoodTest#abc,MyGoodTest#a1b" );
         DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
         Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
-        List<String> list = new ArrayList<String>();
-        list.add( "abc(DubboLazyConnectTest)" );
-        list.add( "a1b(DubboLazyConnectTest)" );
-        list.add( "a2d(DubboProtocolTest)" );
-        list.add( "aBc(DubboLazyConnectTest)" );
+        String[] strArray = { "abc(MyGoodTest)", "a1b(MyGoodTest)", "a2d(MyBadTest)", "aBc(MyGoodTest)" };
+        List<String> list = Arrays.asList( strArray );
         list.sort( testOrderRunOrderComparator );
-        assertEquals( list.get( 0 ), "a2d(DubboProtocolTest)" );
+        String[] strArray2 = { "a2d(MyBadTest)", "aBc(MyGoodTest)", "abc(MyGoodTest)", "a1b(MyGoodTest)" };
+        List<String> list2 = Arrays.asList( strArray2 );
+        assertEquals( list, list2 );
     }
 
-    public void testOrderTestClasses4()
+    public void testOrderTestRegexClassesAndMethods()
     {
         RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
-        System.setProperty( "test", "Dubbo*Test#a?c,My???Test#test*" );
+        System.setProperty( "test", "Amber*Test#a?c,My???Test#test*" );
         DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
         Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
-        List<String> list = new ArrayList<String>();
-        list.add( "abc(DubboLazyConnectTest)" );
-        list.add( "testabc(MyabcTest)" );
-        list.add( "a2c(DubboProtocolTest)" );
-        list.add( "testefg(MyefgTest)" );
-        list.add( "aBc(DubboLazyConnectTest)" );
+        String[] strArray = { "abc(AmberGoodTest)", "testabc(MyabcTest)", "a2c(AmberBadTest)", "testefg(MyefgTest)", "aBc(AmberGoodTest)" };
+        List<String> list = Arrays.asList( strArray );
         list.sort( testOrderRunOrderComparator );
-        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 0 ) )[0].substring( 0,5 ), "Dubbo" );
+        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 0 ) )[0].substring( 0,5 ), "Amber" );
+        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 1 ) )[0].substring( 0,5 ), "Amber" );
+        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 2 ) )[0].substring( 0,5 ), "Amber" );
         assertEquals( runOrderCalculator.getClassAndMethod( list.get( 3 ) )[0].substring( 0,2 ), "My" );
+        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 4 ) )[0].substring( 0,2 ), "My" );
     }
 }

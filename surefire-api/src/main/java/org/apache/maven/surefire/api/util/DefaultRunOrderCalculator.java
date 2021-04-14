@@ -73,7 +73,14 @@ public class DefaultRunOrderCalculator
             runOrderParameters.setRunOrderRandomSeed( runOrderRandomSeed );
         }
         this.random = new Random( runOrderRandomSeed );
-        this.testListResolver = getTestListResolver();
+        if ( RunOrder.TESTORDER.equals( getRunOrderMethod() ) )
+        {
+            this.testListResolver = getTestListResolver();
+        }
+        else
+        {
+            this.testListResolver = null;
+        }
     }
 
     @Override
@@ -94,11 +101,7 @@ public class DefaultRunOrderCalculator
     @Override
     public Comparator<String> comparatorForTestMethods()
     {
-        if ( runOrder.length != 1 )
-        {
-            throw new IllegalStateException( "Unsupported number of runOrders. Expected 1. Got: " + runOrder.length );
-        }
-        RunOrder methodRunOrder = runOrder[0];
+        RunOrder methodRunOrder = getRunOrderMethod();
         if ( RunOrder.TESTORDER.equals( methodRunOrder ) )
         {
             return new Comparator<String>()
@@ -162,6 +165,20 @@ public class DefaultRunOrderCalculator
             classAndMethod[1] = nameSplit1[0];
         }
         return classAndMethod;
+    }
+
+    private RunOrder getRunOrderMethod()
+    {
+        if ( runOrder.length == 0 )
+        {
+            throw new IllegalStateException( "Expected runOrder to be testorder." );
+        }
+        List<RunOrder> runOrderList = new ArrayList<RunOrder>( Arrays.asList( runOrder ) );
+        if ( runOrder.length > 1 && runOrderList.contains( RunOrder.TESTORDER ) )
+        {
+            throw new IllegalStateException( "Unsupported number of runOrders. Expected only testorder. Got: " + runOrder.length );
+        }
+        return runOrder[0];
     }
 
     private void orderTestClasses( List<Class<?>> testClasses, RunOrder runOrder )

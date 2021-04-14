@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static java.util.Collections.addAll;
@@ -503,17 +504,17 @@ public class TestListResolverTest
         return resolved;
     }
 
-    public void testOrderComparatorTest1()
+    public void testOrderComparatorTest()
     {
         List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "DubboLazyConnectTest#testa2d" );
-        orderParamList.add( "DubboLazyConnectTest#testabc" );
-        orderParamList.add( "DubboLazyConnectTest#testa1b" );
-        orderParamList.add( "DubboProtocolTest#testa1b" );
-        orderParamList.add( "DubboProtocolTest#testaBc" );
+        orderParamList.add( "MyGoodTest#testa2d" );
+        orderParamList.add( "MyGoodTest#testabc" );
+        orderParamList.add( "MyGoodTest#testa1b" );
+        orderParamList.add( "MyBadTest#testa1b" );
+        orderParamList.add( "MyBadTest#testaBc" );
         TestListResolver testListResolver = new TestListResolver( orderParamList );
-        String className = "DubboLazyConnectTest";
-        String className2 = "DubboProtocolTest";
+        String className = "MyGoodTest";
+        String className2 = "MyBadTest";
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa2d", "testa1b" ), -1 );
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa2d", "testabc" ), -1 );
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa1b", "testabc" ), 1 );
@@ -525,17 +526,17 @@ public class TestListResolverTest
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, "testa2d", "testabc" ), 1 );
     }
 
-    public void testOrderComparatorTest2()
+    public void testRegexMethodOrderComparator()
     {
         List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "DubboLazyConnectTest#testa?c" );
-        orderParamList.add( "DubboLazyConnectTest#testa?b" );
-        orderParamList.add( "DubboProtocolTest#test?1*" );
-        orderParamList.add( "!DubboLazyConnectTest#testa4b" );
-        orderParamList.add( "!DubboProtocolTest#test11MyTest" );
+        orderParamList.add( "MyGoodTest#testa?c" );
+        orderParamList.add( "MyGoodTest#testa?b" );
+        orderParamList.add( "MyBadTest#test?1*" );
+        orderParamList.add( "!MyGoodTest#testa4b" );
+        orderParamList.add( "!MyBadTest#test11MyTest" );
         TestListResolver testListResolver = new TestListResolver( orderParamList );
-        String className = "DubboLazyConnectTest";
-        String className2 = "DubboProtocolTest";
+        String className = "MyGoodTest";
+        String className2 = "MyBadTest";
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testabc", "testa1b" ), -1 );
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testaBc", "testa2b" ), -1 );
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className, "testa1b", "testa3c" ), 1 );
@@ -548,16 +549,16 @@ public class TestListResolverTest
         assertEquals( ( int ) testListResolver.testOrderComparator( className2, className2, "test11MyTest", "test456" ), -1 );
     }
 
-    public void testOrderComparatorTest3()
+    public void testRegexClassOrderComparator()
     {
         List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "DubboLazy2*Test.java" );
-        orderParamList.add( "???DubboLazy1*Test" );
-        orderParamList.add( "!abcDubboLazy1PeaceTest" );
+        orderParamList.add( "MyGood2*Test.java" );
+        orderParamList.add( "???MyGood1*Test" );
+        orderParamList.add( "!abcMyGood1PeaceTest" );
         TestListResolver testListResolver = new TestListResolver( orderParamList );
-        String className = "DubboLazy2ConnectTest";
-        String className2 = "456DubboLazy1ConnectTest";
-        String className3 = "abcDubboLazy1PeaceTest";
+        String className = "MyGood2ConnectTest";
+        String className2 = "456MyGood1ConnectTest";
+        String className3 = "abcMyGood1PeaceTest";
         assertEquals( ( int ) testListResolver.testOrderComparator( className, className2, null, null ), -1 );
         assertEquals( ( int ) testListResolver.testOrderComparator( className2, className, null, null ), 1 );
         assertEquals( ( int ) testListResolver.testOrderComparator( className3, className2, null, null ), -1 );
