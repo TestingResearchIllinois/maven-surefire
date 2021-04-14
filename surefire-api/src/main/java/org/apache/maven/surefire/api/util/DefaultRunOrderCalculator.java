@@ -20,7 +20,6 @@ package org.apache.maven.surefire.api.util;
  */
 
 import org.apache.maven.surefire.api.runorder.RunEntryStatisticsMap;
-import org.apache.maven.surefire.api.testset.ResolvedTest;
 import org.apache.maven.surefire.api.testset.RunOrderParameters;
 import org.apache.maven.surefire.api.testset.TestListResolver;
 
@@ -176,7 +175,7 @@ public class DefaultRunOrderCalculator
         List<RunOrder> runOrderList = new ArrayList<RunOrder>( Arrays.asList( runOrder ) );
         if ( runOrder.length > 1 && runOrderList.contains( RunOrder.TESTORDER ) )
         {
-            throw new IllegalStateException( "Unsupported number of runOrders. Expected only testorder. Got: " + runOrder.length );
+            throw new IllegalStateException( "Expected only testorder. Got: " + runOrder.length );
         }
         return runOrder[0];
     }
@@ -192,7 +191,7 @@ public class DefaultRunOrderCalculator
                         {
                             return testListResolver.testOrderComparator( o1.getName(), o2.getName(), null, null );
                         }
-                    });
+                    } );
         }
         else if ( RunOrder.RANDOM.equals( runOrder ) )
         {
