@@ -63,37 +63,32 @@ public class RunOrderCalculatorTest
 
     }
 
-    static class DubboLazyConnectTest
-    {
-
-    }
-
     public void testOrderTestMethods()
     {
         RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
-        System.setProperty( "test", "MyGoodTest#a2d,MyGoodTest#aBc,MyGoodTest#abc,MyGoodTest#a1b" );
+        System.setProperty( "test", "TestClass#a2d,TestClass#aBc,TestClass#abc,TestClass#a1b" );
         DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
         Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
-        String[] strArray = { "abc(MyGoodTest)", "a1b(MyGoodTest)", "a2d(MyGoodTest)", "aBc(MyGoodTest)" };
-        List<String> list = Arrays.asList( strArray );
-        list.sort( testOrderRunOrderComparator );
-        String[] strArray2 = { "a2d(MyGoodTest)", "aBc(MyGoodTest)", "abc(MyGoodTest)", "a1b(MyGoodTest)" };
-        List<String> list2 = Arrays.asList( strArray2 );
-        assertEquals( list, list2 );
+        String[] strArray = { "abc(TestClass)", "a1b(TestClass)", "a2d(TestClass)", "aBc(TestClass)" };
+        List<String> actual = Arrays.asList( strArray );
+        actual.sort( testOrderRunOrderComparator );
+        String[] strArray2 = { "a2d(TestClass)", "aBc(TestClass)", "abc(TestClass)", "a1b(TestClass)" };
+        List<String> expected = Arrays.asList( strArray2 );
+        assertEquals( actual, expected );
     }
 
     public void testOrderTestClassesAndMethods()
     {
         RunOrderParameters runOrderParameters = new RunOrderParameters( "testorder" , null );
-        System.setProperty( "test", "MyBadTest#a2d,MyGoodTest#aBc,MyGoodTest#abc,MyGoodTest#a1b" );
+        System.setProperty( "test", "TestClass1#a2d,TestClass2#aBc,TestClass2#abc,TestClass2#a1b" );
         DefaultRunOrderCalculator runOrderCalculator = new DefaultRunOrderCalculator( runOrderParameters, 1 );
         Comparator<String> testOrderRunOrderComparator = runOrderCalculator.comparatorForTestMethods();
-        String[] strArray = { "abc(MyGoodTest)", "a1b(MyGoodTest)", "a2d(MyBadTest)", "aBc(MyGoodTest)" };
-        List<String> list = Arrays.asList( strArray );
-        list.sort( testOrderRunOrderComparator );
-        String[] strArray2 = { "a2d(MyBadTest)", "aBc(MyGoodTest)", "abc(MyGoodTest)", "a1b(MyGoodTest)" };
-        List<String> list2 = Arrays.asList( strArray2 );
-        assertEquals( list, list2 );
+        String[] strArray = { "abc(TestClass2)", "a1b(TestClass2)", "a2d(TestClass1)", "aBc(TestClass2)" };
+        List<String> actual = Arrays.asList( strArray );
+        actual.sort( testOrderRunOrderComparator );
+        String[] strArray2 = { "a2d(TestClass1)", "aBc(TestClass2)", "abc(TestClass2)", "a1b(TestClass2)" };
+        List<String> expected = Arrays.asList( strArray2 );
+        assertEquals( actual, expected );
     }
 
     public void testOrderTestRegexClassesAndMethods()
@@ -107,12 +102,12 @@ public class RunOrderCalculatorTest
                               "a2c(AmberBadTest)", 
                               "testefg(MyefgTest)", 
                               "aBc(AmberGoodTest)" };
-        List<String> list = Arrays.asList( strArray );
-        list.sort( testOrderRunOrderComparator );
-        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 0 ) )[0].substring( 0, 5 ), "Amber" );
-        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 1 ) )[0].substring( 0, 5 ), "Amber" );
-        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 2 ) )[0].substring( 0, 5 ), "Amber" );
-        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 3 ) )[0].substring( 0, 2 ), "My" );
-        assertEquals( runOrderCalculator.getClassAndMethod( list.get( 4 ) )[0].substring( 0, 2 ), "My" );
+        List<String> actual = Arrays.asList( strArray );
+        actual.sort( testOrderRunOrderComparator );
+        assertEquals( runOrderCalculator.getClassAndMethod( actual.get( 0 ) )[0].substring( 0, 5 ), "Amber" );
+        assertEquals( runOrderCalculator.getClassAndMethod( actual.get( 1 ) )[0].substring( 0, 5 ), "Amber" );
+        assertEquals( runOrderCalculator.getClassAndMethod( actual.get( 2 ) )[0].substring( 0, 5 ), "Amber" );
+        assertEquals( runOrderCalculator.getClassAndMethod( actual.get( 3 ) )[0].substring( 0, 2 ), "My" );
+        assertEquals( runOrderCalculator.getClassAndMethod( actual.get( 4 ) )[0].substring( 0, 2 ), "My" );
     }
 }

@@ -507,14 +507,14 @@ public class TestListResolverTest
     public void testOrderComparatorTest()
     {
         List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "MyGoodTest#testa2d" );
-        orderParamList.add( "MyGoodTest#testabc" );
-        orderParamList.add( "MyGoodTest#testa1b" );
-        orderParamList.add( "MyBadTest#testa1b" );
-        orderParamList.add( "MyBadTest#testaBc" );
+        orderParamList.add( "TestClass1#testa2d" );
+        orderParamList.add( "TestClass1#testabc" );
+        orderParamList.add( "TestClass1#testa1b" );
+        orderParamList.add( "TestClass2#testa1b" );
+        orderParamList.add( "TestClass2#testaBc" );
         TestListResolver tlr = new TestListResolver( orderParamList );
-        String className = "MyGoodTest";
-        String className2 = "MyBadTest";
+        String className = "TestClass1";
+        String className2 = "TestClass2";
         assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testa1b" ), -1 );
         assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testabc" ), -1 );
         assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testabc" ), 1 );
@@ -529,14 +529,14 @@ public class TestListResolverTest
     public void testRegexMethodOrderComparator()
     {
         List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "MyGoodTest#testa?c" );
-        orderParamList.add( "MyGoodTest#testa?b" );
-        orderParamList.add( "MyBadTest#test?1*" );
-        orderParamList.add( "!MyGoodTest#testa4b" );
-        orderParamList.add( "!MyBadTest#test11MyTest" );
+        orderParamList.add( "TestClass1#testa?c" );
+        orderParamList.add( "TestClass1#testa?b" );
+        orderParamList.add( "TestClass2#test?1*" );
+        orderParamList.add( "!TestClass1#testa4b" );
+        orderParamList.add( "!TestClass2#test11MyTest" );
         TestListResolver tlr = new TestListResolver( orderParamList );
-        String className = "MyGoodTest";
-        String className2 = "MyBadTest";
+        String className = "TestClass1";
+        String className2 = "TestClass2";
         assertEquals( ( int ) tlr.testOrderComparator( className, className, "testabc", "testa1b" ), -1 );
         assertEquals( ( int ) tlr.testOrderComparator( className, className, "testaBc", "testa2b" ), -1 );
         assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testa3c" ), 1 );
@@ -552,13 +552,13 @@ public class TestListResolverTest
     public void testRegexClassOrderComparator()
     {
         List<String> orderParamList = new ArrayList<String>();
-        orderParamList.add( "MyGood2*Test.java" );
-        orderParamList.add( "???MyGood1*Test" );
-        orderParamList.add( "!abcMyGood1PeaceTest" );
+        orderParamList.add( "My2*Test.java" );
+        orderParamList.add( "???My1*Test" );
+        orderParamList.add( "!abcMy1PeaceTest" );
         TestListResolver tlr = new TestListResolver( orderParamList );
-        String className = "MyGood2ConnectTest";
-        String className2 = "456MyGood1ConnectTest";
-        String className3 = "abcMyGood1PeaceTest";
+        String className = "My2ConnectTest";
+        String className2 = "456My1ConnectTest";
+        String className3 = "abcMy1PeaceTest";
         assertEquals( ( int ) tlr.testOrderComparator( className, className2, null, null ), -1 );
         assertEquals( ( int ) tlr.testOrderComparator( className2, className, null, null ), 1 );
         assertEquals( ( int ) tlr.testOrderComparator( className3, className2, null, null ), -1 );

@@ -168,12 +168,7 @@ public class DefaultRunOrderCalculator
 
     private RunOrder getRunOrderMethod()
     {
-        if ( runOrder.length == 0 )
-        {
-            throw new IllegalStateException( "Expected runOrder to be testorder." );
-        }
-        List<RunOrder> runOrderList = new ArrayList<RunOrder>( Arrays.asList( runOrder ) );
-        if ( runOrder.length > 1 && runOrderList.contains( RunOrder.TESTORDER ) )
+        if ( runOrder.length > 1 && Arrays.asList( runOrder ).contains( RunOrder.TESTORDER ) )
         {
             throw new IllegalStateException( "Expected only testorder. Got: " + runOrder.length );
         }
