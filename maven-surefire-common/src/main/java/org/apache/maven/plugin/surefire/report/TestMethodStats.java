@@ -48,6 +48,18 @@ public class TestMethodStats
         return testClassMethodName;
     }
 
+    public String getTestClassName()
+    {
+        if ( testClassMethodName.contains( "." ) )
+        {
+            return testClassMethodName.substring( 0, testClassMethodName.lastIndexOf( "." ) );
+        }
+        else
+        {
+            return testClassMethodName;
+        }
+    }
+
     public ReportEntryType getResultType()
     {
         return resultType;

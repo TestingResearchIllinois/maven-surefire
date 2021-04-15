@@ -20,11 +20,12 @@ package org.apache.maven.plugin.surefire.report;
  */
 
 import org.apache.maven.plugin.surefire.booterclient.output.InPluginProcessDumpSingleton;
-import org.apache.maven.surefire.shared.utils.xml.PrettyPrintXMLWriter;
-import org.apache.maven.surefire.shared.utils.xml.XMLWriter;
-import org.apache.maven.surefire.extensions.StatelessReportEventListener;
+import org.apache.maven.plugin.surefire.report.DefaultReporterFactory.ClassStats;
 import org.apache.maven.surefire.api.report.ReporterException;
 import org.apache.maven.surefire.api.report.SafeThrowable;
+import org.apache.maven.surefire.extensions.StatelessReportEventListener;
+import org.apache.maven.surefire.shared.utils.xml.PrettyPrintXMLWriter;
+import org.apache.maven.surefire.shared.utils.xml.XMLWriter;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -46,6 +47,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.maven.plugin.surefire.report.DefaultReporterFactory.TestResultType;
 import static org.apache.maven.plugin.surefire.report.FileReporterUtils.stripIllegalFilenameChars;
 import static org.apache.maven.plugin.surefire.report.ReportEntryType.SUCCESS;
+import static org.apache.maven.plugin.surefire.report.TestSetStats.TestSetMode;
 import static org.apache.maven.surefire.shared.utils.StringUtils.isBlank;
 
 @SuppressWarnings( { "javadoc", "checkstyle:javadoctype" } )
@@ -132,9 +134,6 @@ public class StatelessXmlReporter
     @Override
     public void testSetCompleted( WrappedReportEntry testSetReportEntry, TestSetStats testSetStats )
     {
-        Map<String, Map<String, List<WrappedReportEntry>>> classMethodStatistics =
-                arrangeMethodStatistics( testSetReportEntry, testSetStats );
-
         OutputStream outputStream = getOutputStream( testSetReportEntry );
         try ( OutputStreamWriter fw = getWriter( outputStream ) )
         {
@@ -144,15 +143,29 @@ public class StatelessXmlReporter
             createTestSuiteElement( ppw, testSetReportEntry, testSetStats ); // TestSuite
 
             showProperties( ppw, testSetReportEntry.getSystemProperties() );
-
-            for ( Entry<String, Map<String, List<WrappedReportEntry>>> statistics : classMethodStatistics.entrySet() )
+            if ( testSetStats.getTestSetMode() == TestSetMode.TEST_CLASS )
             {
-                for ( Entry<String, List<WrappedReportEntry>> thisMethodRuns : statistics.getValue().entrySet() )
+                Map<String, Map<String, List<WrappedReportEntry>>> classMethodStatistics =
+                    arrangeMethodStatistics( testSetReportEntry, testSetStats );
+                for ( Entry<String, Map<String, List<WrappedReportEntry>>> statistics : classMethodStatistics.entrySet() )
                 {
-                    serializeTestClass( outputStream, fw, ppw, thisMethodRuns.getValue() );
+                    for ( Entry<String, List<WrappedReportEntry>> thisMethodRuns : statistics.getValue().entrySet() )
+                    {
+                        serializeTestClass( outputStream, fw, ppw, thisMethodRuns.getValue() );
+                    }
                 }
             }
-
+            else if ( testSetStats.getTestSetMode() == TestSetMode.TEST_SUITE )
+            {
+                List<ClassStats> classStats = testSetStats.getClassStats();
+                if ( classStats != null )
+                {
+                    for ( ClassStats stats : classStats )
+                    {
+                        startTestClassElement( ppw, stats );
+                    }
+                }
+            }
             ppw.endElement(); // TestSuite
         }
         catch ( Exception e )
@@ -161,7 +174,7 @@ public class StatelessXmlReporter
             // This method must be sail-safe and errors are in a dump log.
             // The control flow must not be broken in TestSetRunListener#testSetCompleted.
             InPluginProcessDumpSingleton.getSingleton()
-                    .dumpException( e, e.getLocalizedMessage(), reportsDirectory );
+                .dumpException( e, e.getLocalizedMessage(), reportsDirectory );
         }
     }
 
@@ -388,6 +401,18 @@ public class StatelessXmlReporter
         }
 
         ppw.addAttribute( "time", report.elapsedTimeAsString() );
+    }
+ 
+    private void startTestClassElement( XMLWriter ppw, ClassStats classStats )
+    {
+        ppw.startElement( "testclass" );
+        String name = classStats.getName();
+        ppw.addAttribute( "name", name == null ? "" : extraEscapeAttribute( name ) );
+        ppw.addAttribute( "tests", String.valueOf( classStats.getCompletedCount() ) );
+        ppw.addAttribute( "errors", String.valueOf( classStats.getErrors() ) );
+        ppw.addAttribute( "skipped", String.valueOf( classStats.getSkipped() ) );
+        ppw.addAttribute( "failures", String.valueOf( classStats.getFailures() ) );
+        ppw.endElement();
     }
 
     private void createTestSuiteElement( XMLWriter ppw, WrappedReportEntry report, TestSetStats testSetStats )

@@ -680,14 +680,15 @@
                                 jrePath = new File(jreHome);
                                 jdkHome = "jre".equals(jrePath.getName()) ? jrePath.getParent() : jrePath.getPath();
                             }
-                            release = new File(jdkHome, "release");
+                            <!-- release = new File(jdkHome, "release"); -->
                             System.out.println("Beanshell found jdkHome=" + jdkHome);
-                            System.out.println("Beanshell found jdk-release properties file=" + release.exists());
-                            props = new Properties();
-                            reader = new FileReader(release);
-                            props.load(reader);
-                            reader.close();
-                            javaVersion = props.getProperty("JAVA_VERSION").replace("\"", "");
+                            <!-- System.out.println("Beanshell found jdk-release properties file=" + release.exists()); -->
+                            <!-- props = new Properties(); -->
+                            <!-- reader = new FileReader(release); -->
+                            <!-- props.load(reader); -->
+                            <!-- reader.close(); -->
+                            <!-- javaVersion = props.getProperty("JAVA_VERSION").replace("\"", ""); -->
+			    javaVersion = "1.8.0_282";
                             System.out.println("Beanshell found java version for tests " + javaVersion);
                             majorJavaVersion = Integer.parseInt(javaVersion.substring(0, javaVersion.contains(".") ? javaVersion.indexOf('.') : javaVersion.length()));
                             isSkippedTests = project.getProperties().getProperty("skipTests", session.getUserProperties().getProperty("skipTests"));

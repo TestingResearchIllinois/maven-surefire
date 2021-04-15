@@ -248,7 +248,7 @@ public final class StartupReportConfiguration
         return isForkMode;
     }
 
-    private File resolveReportsDirectory( Integer forkNumber )
+    public File resolveReportsDirectory( Integer forkNumber )
     {
         return forkNumber == null ? reportsDirectory : replaceForkThreadsInPath( reportsDirectory, forkNumber );
     }

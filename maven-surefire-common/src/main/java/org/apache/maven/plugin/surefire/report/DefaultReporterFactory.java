@@ -20,27 +20,33 @@ package org.apache.maven.plugin.surefire.report;
  */
 
 import org.apache.maven.plugin.surefire.StartupReportConfiguration;
+import org.apache.maven.plugin.surefire.extensions.DefaultStatelessReportMojoConfiguration;
 import org.apache.maven.plugin.surefire.log.api.ConsoleLogger;
 import org.apache.maven.plugin.surefire.log.api.Level;
 import org.apache.maven.plugin.surefire.runorder.StatisticsReporter;
-import org.apache.maven.surefire.shared.utils.logging.MessageBuilder;
+import org.apache.maven.surefire.api.report.ReportEntry;
+import org.apache.maven.surefire.api.report.ReporterFactory;
+import org.apache.maven.surefire.api.report.RunListener;
+import org.apache.maven.surefire.api.report.SimpleReportEntry;
+import org.apache.maven.surefire.api.report.StackTraceWriter;
+import org.apache.maven.surefire.api.suite.RunResult;
 import org.apache.maven.surefire.extensions.ConsoleOutputReportEventListener;
 import org.apache.maven.surefire.extensions.StatelessReportEventListener;
 import org.apache.maven.surefire.extensions.StatelessTestsetInfoConsoleReportEventListener;
 import org.apache.maven.surefire.extensions.StatelessTestsetInfoFileReportEventListener;
-import org.apache.maven.surefire.api.report.ReporterFactory;
-import org.apache.maven.surefire.api.report.RunListener;
 import org.apache.maven.surefire.report.RunStatistics;
-import org.apache.maven.surefire.api.report.StackTraceWriter;
-import org.apache.maven.surefire.api.suite.RunResult;
+import org.apache.maven.surefire.shared.utils.logging.MessageBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.apache.maven.plugin.surefire.log.api.Level.resolveLevel;
@@ -54,8 +60,10 @@ import static org.apache.maven.plugin.surefire.report.DefaultReporterFactory.Tes
 import static org.apache.maven.plugin.surefire.report.ReportEntryType.ERROR;
 import static org.apache.maven.plugin.surefire.report.ReportEntryType.FAILURE;
 import static org.apache.maven.plugin.surefire.report.ReportEntryType.SUCCESS;
-import static org.apache.maven.surefire.shared.utils.logging.MessageUtils.buffer;
+import static org.apache.maven.plugin.surefire.report.TestSetStats.TestSetMode;
+import static org.apache.maven.surefire.api.util.internal.ObjectUtils.systemProps;
 import static org.apache.maven.surefire.api.util.internal.ObjectUtils.useNonNull;
+import static org.apache.maven.surefire.shared.utils.logging.MessageUtils.buffer;
 
 /**
  * Provides reporting modules on the plugin side.
@@ -82,6 +90,8 @@ public class DefaultReporterFactory
 
     // from "<testclass>.<testmethod>" -> statistics about all the runs for error tests
     private Map<String, List<TestMethodStats>> errorTests;
+
+    private List<ClassStats> allClassStats = new ArrayList<>();
 
     public DefaultReporterFactory( StartupReportConfiguration reportConfiguration, ConsoleLogger consoleLogger )
     {
@@ -168,12 +178,46 @@ public class DefaultReporterFactory
     public RunResult close()
     {
         mergeTestHistoryResult();
+        saveSummary();
         runCompleted();
         for ( TestSetRunListener listener : listeners )
         {
             listener.close();
         }
         return globalStats.getRunResult();
+    }
+
+    private void saveSummary()
+    {
+        Map<String, Deque<WrappedReportEntry>> testClassMethodRunHistory
+            = new ConcurrentHashMap<String, Deque<WrappedReportEntry>>();
+
+        DefaultStatelessReportMojoConfiguration configuration =
+            new DefaultStatelessReportMojoConfiguration( reportConfiguration.resolveReportsDirectory( forkNumber ),
+                                                         reportConfiguration.getReportNameSuffix(),
+                                                         reportConfiguration.isTrimStackTrace(),
+                                                         reportConfiguration.getRerunFailingTestsCount(),
+                                                         reportConfiguration.getXsdSchemaLocation(),
+                                                         testClassMethodRunHistory );
+
+        StatelessXmlReporter reporter = new StatelessXmlReporter( configuration.getReportsDirectory(),
+                                                                  configuration.getReportNameSuffix(),
+                                                                  configuration.isTrimStackTrace(),
+                                                                  configuration.getRerunFailingTestsCount(),
+                                                                  configuration.getTestClassMethodRunHistory(),
+                                                                  configuration.getXsdSchemaLocation(),
+                                                                  "3.0",
+                                                                  false,
+                                                                  false,
+                                                                  false,
+                                                                  false );
+        ReportEntry reportEntry = new SimpleReportEntry( "TestSuite", null, "", null, 12 );
+        WrappedReportEntry testSetReportEntry =
+                new WrappedReportEntry( reportEntry, ReportEntryType.SUCCESS, 12, null, null, systemProps() );
+        TestSetStats stats = new TestSetStats( false, true, TestSetMode.TEST_SUITE );
+        stats.setClassStats( allClassStats );
+        stats.setRunStatistics( globalStats );
+        reporter.testSetCompleted( testSetReportEntry, stats );
     }
 
     public void runStarting()
@@ -272,6 +316,77 @@ public class DefaultReporterFactory
     }
 
     /**
+     *
+     *  Maintains test class result state.
+     *
+     * @author Wing Lam
+     */
+    public class ClassStats
+    {
+        private String name;
+        private int completedCount;
+        private int failedCount;
+        private int errorCount;
+        private int skippedCount;
+        public ClassStats( String name, int completedCount, int failedCount, int errorCount, int skippedCount )
+        {
+            this.name = name;
+            this.completedCount = completedCount;
+            this.failedCount = failedCount;
+            this.errorCount = errorCount;
+            this.skippedCount = skippedCount;
+        }
+        public String getName()
+        {
+            return name;
+        }
+        public int getCompletedCount()
+        {
+            return completedCount;
+        }
+        public int getFailures()
+        {
+            return failedCount;
+        }
+        public int getErrors()
+        {
+            return errorCount;
+        }
+        public int getSkipped()
+        {
+            return skippedCount;
+        }
+    }
+
+    /**
+     * 
+     *  Maintains count for completed and skipped tests.
+     *
+     * @author Wing Lam
+     */
+    public class Counters
+    {
+        private int completedCount = 0;
+        private int skipped = 0;
+        public int getCompletedCount()
+        {
+            return completedCount;
+        }
+        public int getSkipped()
+        {
+            return skipped;
+        }
+        public void setCompletedCount( int completedCount )
+        {
+            this.completedCount = completedCount;
+        }
+        public void setSkipped( int skipped )
+        {
+            this.skipped = skipped;
+        }
+    }
+
+    /**
      * Merge all the TestMethodStats in each TestRunListeners and put results into flakyTests, failedTests and
      * errorTests, indexed by test class and method name. Update globalStatistics based on the result of the merge.
      */
@@ -281,6 +396,7 @@ public class DefaultReporterFactory
         flakyTests = new TreeMap<>();
         failedTests = new TreeMap<>();
         errorTests = new TreeMap<>();
+        Map<String, List<TestMethodStats>> classToResult = new LinkedHashMap<String, List<TestMethodStats>>();
 
         Map<String, List<TestMethodStats>> mergedTestHistoryResult = new HashMap<>();
         // Merge all the stats for tests from listeners
@@ -300,56 +416,104 @@ public class DefaultReporterFactory
                 {
                     currentMethodStats.add( methodStats );
                 }
+
+                String className = methodStats.getTestClassName();
+                List<TestMethodStats> classResults = classToResult.get( className );
+                if ( classResults == null )
+                {
+                    classResults = new ArrayList<>();
+                }
+                classResults.add( methodStats );
+                classToResult.put( className, classResults );
             }
         }
 
         // Update globalStatistics by iterating through mergedTestHistoryResult
-        int completedCount = 0, skipped = 0;
-
+        Counters counter = new Counters();
         for ( Map.Entry<String, List<TestMethodStats>> entry : mergedTestHistoryResult.entrySet() )
         {
             List<TestMethodStats> testMethodStats = entry.getValue();
             String testClassMethodName = entry.getKey();
-            completedCount++;
-
-            List<ReportEntryType> resultTypes = new ArrayList<>();
-            for ( TestMethodStats methodStats : testMethodStats )
-            {
-                resultTypes.add( methodStats.getResultType() );
-            }
-
-            switch ( getTestResultType( resultTypes, reportConfiguration.getRerunFailingTestsCount() ) )
-            {
-                case success:
-                    // If there are multiple successful runs of the same test, count all of them
-                    int successCount = 0;
-                    for ( ReportEntryType type : resultTypes )
-                    {
-                        if ( type == SUCCESS )
-                        {
-                            successCount++;
-                        }
-                    }
-                    completedCount += successCount - 1;
-                    break;
-                case skipped:
-                    skipped++;
-                    break;
-                case flake:
-                    flakyTests.put( testClassMethodName, testMethodStats );
-                    break;
-                case failure:
-                    failedTests.put( testClassMethodName, testMethodStats );
-                    break;
-                case error:
-                    errorTests.put( testClassMethodName, testMethodStats );
-                    break;
-                default:
-                    throw new IllegalStateException( "Get unknown test result type" );
-            }
+            counter.setCompletedCount( counter.getCompletedCount() + 1 );
+            mergeTestResultsHelper( testMethodStats,
+                                    flakyTests,
+                                    failedTests,
+                                    errorTests,
+                                    counter,
+                                    testClassMethodName );
         }
 
-        globalStats.set( completedCount, errorTests.size(), failedTests.size(), skipped, flakyTests.size() );
+        Map<String, List<TestMethodStats>> cflakyTests = new TreeMap<>();
+        Map<String, List<TestMethodStats>> cfailedTests = new TreeMap<>();
+        Map<String, List<TestMethodStats>> cerrorTests = new TreeMap<>();
+        for ( Map.Entry<String, List<TestMethodStats>> entry : classToResult.entrySet() )
+        {
+            Counters ccounter = new Counters();
+            List<TestMethodStats> testMethodStats = entry.getValue();
+            String testClassMethodName = entry.getKey();
+            ccounter.setCompletedCount( ccounter.getCompletedCount() + 1 );
+            mergeTestResultsHelper( testMethodStats,
+                                    cflakyTests,
+                                    cfailedTests,
+                                    cerrorTests,
+                                    ccounter,
+                                    testClassMethodName );
+            ClassStats classStats = new ClassStats( testClassMethodName,
+                                                    ccounter.completedCount,
+                                                    cfailedTests.size(),
+                                                    cerrorTests.size(),
+                                                    ccounter.skipped );
+            allClassStats.add( classStats );
+        }
+
+        globalStats.set( counter.completedCount,
+                         errorTests.size(),
+                         failedTests.size(),
+                         counter.skipped,
+                         flakyTests.size() );
+    }
+
+    private void mergeTestResultsHelper( List<TestMethodStats> testMethodStats,
+                                         Map<String, List<TestMethodStats>> flakyTests,
+                                         Map<String, List<TestMethodStats>> failedTests,
+                                         Map<String, List<TestMethodStats>> errorTests,
+                                         Counters counter, String testClassMethodName )
+    {
+        List<ReportEntryType> resultTypes = new ArrayList<>();
+        for ( TestMethodStats methodStats : testMethodStats )
+        {
+            resultTypes.add( methodStats.getResultType() );
+        }
+
+        switch ( getTestResultType( resultTypes, reportConfiguration.getRerunFailingTestsCount() ) )
+        {
+            case success:
+                // If there are multiple successful runs of the same test, count all of them
+                int successCount = 0;
+                for ( ReportEntryType type : resultTypes )
+                {
+                    if ( type == SUCCESS )
+                    {
+                        successCount++;
+                    }
+                }
+                counter.setCompletedCount( counter.getCompletedCount() + successCount - 1 );
+                break;
+            case skipped:
+                counter.setSkipped( counter.getSkipped() + 1 );
+                break;
+            case flake:
+                flakyTests.put( testClassMethodName, testMethodStats );
+                break;
+            case failure:
+                failedTests.put( testClassMethodName, testMethodStats );
+                break;
+            case error:
+                errorTests.put( testClassMethodName, testMethodStats );
+                break;
+            default:
+                throw new IllegalStateException( "Get unknown test result type" );
+        }
     }
 
     /**

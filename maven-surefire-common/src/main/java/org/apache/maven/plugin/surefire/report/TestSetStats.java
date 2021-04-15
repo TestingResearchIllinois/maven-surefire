@@ -19,8 +19,10 @@ package org.apache.maven.plugin.surefire.report;
  * under the License.
  */
 
-import org.apache.maven.surefire.shared.utils.logging.MessageBuilder;
+import org.apache.maven.plugin.surefire.report.DefaultReporterFactory.ClassStats;
 import org.apache.maven.surefire.api.report.ReportEntry;
+import org.apache.maven.surefire.report.RunStatistics;
+import org.apache.maven.surefire.shared.utils.logging.MessageBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,6 +48,17 @@ public class TestSetStats
     private static final String IN_MARKER = " - in ";
     private static final String COMMA = ", ";
 
+    /**
+     *
+     *  Specifies whether the TestSetStats are for the whole test class or test suite.
+     *
+     */
+    public enum TestSetMode
+    {
+        TEST_SUITE,
+        TEST_CLASS
+    };
+
     private final Queue<WrappedReportEntry> reportEntries = new ConcurrentLinkedQueue<>();
 
     private final boolean trimStackTrace;
@@ -66,10 +79,20 @@ public class TestSetStats
 
     private long lastStartAt;
 
+    private TestSetMode testSetMode;
+
+    private List<ClassStats> classStats;
+
     public TestSetStats( boolean trimStackTrace, boolean plainFormat )
+    {
+        this( trimStackTrace, plainFormat, TestSetMode.TEST_CLASS );
+    }
+
+    public TestSetStats( boolean trimStackTrace, boolean plainFormat, TestSetMode testSetMode )
     {
         this.trimStackTrace = trimStackTrace;
         this.plainFormat = plainFormat;
+        this.testSetMode = testSetMode;
     }
 
     public int getElapsedSinceTestSetStart()
@@ -163,6 +186,29 @@ public class TestSetStats
     public int getSkipped()
     {
         return skipped;
+    }
+
+    public TestSetMode getTestSetMode()
+    {
+        return testSetMode;
+    }
+
+    public List<ClassStats> getClassStats()
+    {
+        return classStats;
+    }
+
+    public void setRunStatistics( RunStatistics stats )
+    {
+        completedCount = stats.getCompletedCount();
+        skipped = stats.getSkipped();
+        failures = stats.getFailures();
+        errors = stats.getErrors();
+    }
+
+    public void setClassStats( List<ClassStats> classStats )
+    {
+        this.classStats = classStats;
     }
 
     private void incrementCompletedCount()
