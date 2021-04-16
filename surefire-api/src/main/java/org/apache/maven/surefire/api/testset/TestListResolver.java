@@ -547,13 +547,6 @@ public class TestListResolver
 
         String test1 = classFileName1 + "#" + methodName1;
         String test2 = classFileName2 + "#" + methodName2;
-        if ( patternMapper.get( test1 ) < patternMapper.get( test2 ) )
-        {
-            return -1;
-        }
-        else
-        {
-            return 1;
-        }
+        return patternMapper.get( test1 ) - patternMapper.get( test2 );
     }
 }

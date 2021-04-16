@@ -123,7 +123,7 @@ public class DefaultRunOrderCalculator
 
     public TestListResolver getTestListResolver()
     {
-        String orderParam = parseTestOrder( System.getProperty( "test" ) );
+        String orderParam = System.getProperty( "test" );
         if ( orderParam == null  )
         {
             throw new IllegalStateException( "TestListResolver in RunOrderCalculator should be used only when "
@@ -191,33 +191,6 @@ public class DefaultRunOrderCalculator
         {
             Collections.sort( testClasses, sortOrder );
         }
-    }
-
-    private String parseTestOrder( String s )
-    {
-        // if s is a file, then parse each line of the file as a test
-        if ( s != null && s != "" )
-        {
-            File f = new File( s );
-            if ( f.exists() && !f.isDirectory ( ) )
-            {
-                try
-                {
-                    List<String> l = Files.readAllLines( f.toPath(), Charset.defaultCharset( ) );
-                    StringBuilder sb = new StringBuilder( );
-                    for ( String sd : l )
-                    {
-                        sb.append( sd + "," );
-                    }
-                    String sd = sb.toString( );
-                    return sd.substring( 0 , sd.length( ) - 1 );
-                }
-                catch ( IOException e )
-                {
-                }
-            }
-        }
-        return s;
     }
 
     private Comparator<Class> getSortOrderComparator( RunOrder runOrder )

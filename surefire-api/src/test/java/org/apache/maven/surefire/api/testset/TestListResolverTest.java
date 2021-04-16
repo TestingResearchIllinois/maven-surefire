@@ -515,15 +515,16 @@ public class TestListResolverTest
         TestListResolver tlr = new TestListResolver( orderParamList );
         String className = "TestClass1";
         String className2 = "TestClass2";
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testa1b" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testabc" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testabc" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testaBc" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa3d", "testa1b" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className2, "testa2d", "testa1b" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className2, className, "testaBc", "testa1b" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className2, "testa3d", "testa1b" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className2, "testa2d", "testabc" ), 1 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testa1b" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testabc" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testabc" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testaBc" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa3d", "testa1b" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className2, "testa2d", "testa1b" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className2, className, "testaBc", "testa1b" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className2, "testa3d", "testa1b" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className2, "testa2d", "testabc" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa2d", "testa2d" ) == 0 );
     }
 
     public void testRegexMethodOrderComparator()
@@ -537,16 +538,17 @@ public class TestListResolverTest
         TestListResolver tlr = new TestListResolver( orderParamList );
         String className = "TestClass1";
         String className2 = "TestClass2";
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testabc", "testa1b" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testaBc", "testa2b" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testa3c" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testa4b" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className, "testa4b", "testabc" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className2, "testa1b", "test1123" ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className2, className, "testa1b", "testa1b" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className2, className2, "testa1b", "test1123" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className2, className2, "test1123", "test11MyTest" ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className2, className2, "test11MyTest", "test456" ), -1 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testabc", "testa1b" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testaBc", "testa2b" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testa3c" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa1b", "testa4b" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa4b", "testabc" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className2, "testa1b", "test1123" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className2, className, "testa1b", "testa1b" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className2, className2, "testa1b", "test1123" ) == 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className2, className2, "test1123", "test11MyTest" ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className2, className2, "test11MyTest", "test456" ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, "testa1c", "testa1c" ) == 0 );
     }
 
     public void testRegexClassOrderComparator()
@@ -559,9 +561,10 @@ public class TestListResolverTest
         String className = "My2ConnectTest";
         String className2 = "456My1ConnectTest";
         String className3 = "abcMy1PeaceTest";
-        assertEquals( ( int ) tlr.testOrderComparator( className, className2, null, null ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className2, className, null, null ), 1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className3, className2, null, null ), -1 );
-        assertEquals( ( int ) tlr.testOrderComparator( className, className3, null, null ), 1 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className2, null, null ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className2, className, null, null ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className3, className2, null, null ) < 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className3, null, null ) > 0 );
+        assertTrue( ( int ) tlr.testOrderComparator( className, className, null, null ) == 0 );
     }
 }
