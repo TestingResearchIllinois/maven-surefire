@@ -861,6 +861,12 @@ public class AbstractSurefireMojoJava7PlusTest
         }
 
         @Override
+        public String getMethodRunOrder()
+        {
+            return null;
+        };
+
+        @Override
         public Long getRunOrderRandomSeed()
         {
             return null;

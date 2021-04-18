@@ -54,6 +54,7 @@ import static org.apache.maven.surefire.booter.BooterConstants.FORK_NUMBER;
 import static org.apache.maven.surefire.booter.BooterConstants.INCLUDES_PROPERTY_PREFIX;
 import static org.apache.maven.surefire.booter.BooterConstants.ISTRIMSTACKTRACE;
 import static org.apache.maven.surefire.booter.BooterConstants.MAIN_CLI_OPTIONS;
+import static org.apache.maven.surefire.booter.BooterConstants.METHOD_RUN_ORDER;
 import static org.apache.maven.surefire.booter.BooterConstants.PLUGIN_PID;
 import static org.apache.maven.surefire.booter.BooterConstants.PROCESS_CHECKER;
 import static org.apache.maven.surefire.booter.BooterConstants.PROVIDER_CONFIGURATION;
@@ -163,6 +164,7 @@ class BooterSerializer
         {
             properties.setProperty( RUN_ORDER, RunOrder.asString( runOrderParameters.getRunOrder() ) );
             properties.setProperty( RUN_STATISTICS_FILE, runOrderParameters.getRunStatisticsFile() );
+            properties.setProperty( METHOD_RUN_ORDER, runOrderParameters.getMethodRunOrder().toString() );
             properties.setProperty( RUN_ORDER_RANDOM_SEED, runOrderParameters.getRunOrderRandomSeed() );
         }
 

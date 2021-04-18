@@ -182,7 +182,8 @@ public final class SurefireReflector
         Constructor<?> constructor = getConstructor( this.runOrderParameters, arguments );
         File runStatisticsFile = runOrderParameters.getRunStatisticsFile();
         return newInstance( constructor, RunOrder.asString( runOrderParameters.getRunOrder() ), runStatisticsFile,
-                            runOrderParameters.getRunOrderRandomSeed() );
+                            runOrderParameters.getRunOrderRandomSeed(),
+                            runOrderParameters.getMethodRunOrder().toString() );
     }
 
     private Object createTestArtifactInfo( TestArtifactInfo testArtifactInfo )

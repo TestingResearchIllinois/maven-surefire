@@ -33,6 +33,7 @@ import org.apache.maven.surefire.api.testset.TestArtifactInfo;
 import org.apache.maven.surefire.api.testset.TestListResolver;
 import org.apache.maven.surefire.api.testset.TestRequest;
 import org.apache.maven.surefire.api.util.RunOrder;
+import org.apache.maven.surefire.util.MethodRunOrder;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -114,7 +115,8 @@ public class SurefireReflectorTest
         SurefireReflector surefireReflector = getReflector();
         Object foo = getFoo();
 
-        RunOrderParameters runOrderParameters = new RunOrderParameters( RunOrder.DEFAULT, new File( "." ) );
+        RunOrderParameters runOrderParameters = new RunOrderParameters( RunOrder.DEFAULT, new File( "." ),
+            0L, MethodRunOrder.DEFAULT );
         surefireReflector.setRunOrderParameters( foo, runOrderParameters );
         assertTrue( isCalled( foo ) );
     }

@@ -47,6 +47,7 @@ public final class BooterConstants
     public static final String RUN_ORDER = "runOrder";
     public static final String RUN_ORDER_RANDOM_SEED = "runOrderRandomSeed";
     public static final String RUN_STATISTICS_FILE = "runStatisticsFile";
+    public static final String METHOD_RUN_ORDER = "methodRunOrder";
     public static final String TEST_SUITE_XML_FILES = "testSuiteXmlFiles";
     public static final String PROVIDER_CONFIGURATION = "providerConfiguration";
     public static final String FORKTESTSET = "forkTestSet";

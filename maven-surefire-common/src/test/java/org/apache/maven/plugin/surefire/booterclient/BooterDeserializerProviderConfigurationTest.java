@@ -39,6 +39,7 @@ import org.apache.maven.surefire.api.testset.TestArtifactInfo;
 import org.apache.maven.surefire.api.testset.TestListResolver;
 import org.apache.maven.surefire.api.testset.TestRequest;
 import org.apache.maven.surefire.api.util.RunOrder;
+import org.apache.maven.surefire.util.MethodRunOrder;
 import org.junit.After;
 import org.junit.Before;
 
@@ -276,7 +277,8 @@ public class BooterDeserializerProviderConfigurationTest
             new TestRequest( getSuiteXmlFileStrings(), getTestSourceDirectory(),
                              new TestListResolver( USER_REQUESTED_TEST + "#aUserRequestedTestMethod" ),
                     RERUN_FAILING_TEST_COUNT );
-        RunOrderParameters runOrderParameters = new RunOrderParameters( RunOrder.DEFAULT, null );
+        RunOrderParameters runOrderParameters = new RunOrderParameters( RunOrder.DEFAULT, null, null,
+            MethodRunOrder.DEFAULT );
         return new ProviderConfiguration( directoryScannerParameters, runOrderParameters, true, reporterConfiguration,
                 new TestArtifactInfo( "5.0", "ABC" ), testSuiteDefinition, new HashMap<String, String>(), TEST_TYPED,
                 readTestsFromInStream, cli, 0, Shutdown.DEFAULT, 0 );
