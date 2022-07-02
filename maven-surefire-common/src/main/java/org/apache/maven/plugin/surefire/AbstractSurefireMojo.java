@@ -103,6 +103,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -2269,7 +2270,24 @@ public abstract class AbstractSurefireMojo
         if ( isSpecificTestSpecified() )
         {
             includes = new ArrayList<>();
-            addAll( includes, split( getTest(), "," ) );
+
+            File file = new File( getTest() );
+
+            if ( file.exists() )
+            {
+                try
+                {
+                    includes = Files.readAllLines( file.toPath( ), Charset.defaultCharset( ) );
+                }
+                catch ( IOException e )
+                {
+                    e.printStackTrace();
+                }
+            }
+            else
+            {
+                addAll( includes, split( getTest(), "," ) );
+            }
         }
         else
         {

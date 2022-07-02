@@ -23,6 +23,10 @@ import org.apache.maven.surefire.api.runorder.RunEntryStatisticsMap;
 import org.apache.maven.surefire.api.testset.RunOrderParameters;
 import org.apache.maven.surefire.api.testset.TestListResolver;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -120,10 +124,24 @@ public class DefaultRunOrderCalculator
     public TestListResolver getTestListResolver()
     {
         String orderParam = System.getProperty( "test" );
-        if ( orderParam == null  )
+        if ( orderParam == null )
         {
-            throw new IllegalStateException( "TestListResolver in RunOrderCalculator should be used only when "
-                    + "system property -Dtest is set and runOrder is testorder" );
+            String orderParamFile = System.getProperty( "surefire.includesFile" );
+            if ( orderParamFile == null )
+            {
+                throw new IllegalStateException( "TestListResolver in RunOrderCalculator should be used only when "
+                    + "system property -Dtest or -Dsurefire.includesFile is set and runOrder is testorder" );
+            }
+            try
+            {
+                return new TestListResolver(
+                                        Files.readAllLines( new File( System.getProperty( "surefire.includesFile" ) )
+                                        .toPath(), Charset.defaultCharset() ) );
+            }
+            catch ( IOException e )
+            {
+                e.printStackTrace();
+            }
         }
         return new TestListResolver( Arrays.asList( orderParam.split( "," ) ) );
     }

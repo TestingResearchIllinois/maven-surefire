@@ -34,7 +34,7 @@ Specifically, running the command above will result in the tests running in the 
 ## Example with file
 
 ```
-mvn test -Dtest=path_to_file -Dsurefire.runOrder=testorder -pl dubbo-rpc/dubbo-rpc-dubbo
+mvn test -Dsurefire.includesFile=path_to_file -Dsurefire.runOrder=testorder -pl dubbo-rpc/dubbo-rpc-dubbo
 ```
 
 By specifying ```-Dsurefire.runOrder=testorder``` Maven test will run the specifed tests in the order that they appear in the file ```path_to_file```. Note that the ```path_to_file``` should be an **absolute** path (e.g., ```/home/user/project/test-list```).
