@@ -227,16 +227,35 @@ public class KPLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 //		}
 
 		p.getDependencies().clear();
-		for (PluginExecution pe : p.getExecutions()) {
-
-			Xpp3Dom config = (Xpp3Dom) pe.getConfiguration();
-			if (config == null)
-				config = new Xpp3Dom("configuration");
-			rewriteSurefireExecutionConfig(config, testNG);
-			p.setConfiguration(config);
-			pe.setConfiguration(config);
+		Xpp3Dom globalConfig = (Xpp3Dom) p.getConfiguration();
+		if (p.getExecutions().isEmpty()) {
+			if (globalConfig == null) {
+				globalConfig = new Xpp3Dom("configuration");
+				p.setConfiguration(globalConfig);
+			}
+			rewriteSurefireExecutionConfig(globalConfig, testNG);
+			PluginExecution pe = new PluginExecution();
+			pe.setConfiguration(globalConfig);
 			for (Configurator c : configurators)
 				c.applyConfiguration(project, p, pe);
+		} else {
+			for (PluginExecution pe : p.getExecutions()) {
+				Xpp3Dom config = (Xpp3Dom) pe.getConfiguration();
+				if (config == null) {
+					if (globalConfig != null) {
+						config = new Xpp3Dom(globalConfig);
+					} else {
+						config = new Xpp3Dom("configuration");
+					}
+				} else if (globalConfig != null) {
+					config = Xpp3Dom.mergeXpp3Dom(config, globalConfig);
+				}
+				rewriteSurefireExecutionConfig(config, testNG);
+				p.setConfiguration(config);
+				pe.setConfiguration(config);
+				for (Configurator c : configurators)
+					c.applyConfiguration(project, p, pe);
+			}
 		}
 
 	}
