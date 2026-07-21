@@ -20,7 +20,6 @@ package org.apache.maven.surefire.junitplatform;
  */
 
 import static java.util.Arrays.stream;
-import static java.util.Collections.emptyMap;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.logging.Level.WARNING;
@@ -43,6 +42,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -99,6 +99,24 @@ public class JUnitPlatformProvider
         this.launcher = launcher;
         filters = newFilters();
         configurationParameters = newConfigurationParameters();
+        registerTestOrderMethodOrderer();
+    }
+
+    /**
+     * When the run order specifies method order (e.g. {@code -Dsurefire.runOrder=testorder} with a
+     * {@code Class#method} list), the Jupiter engine ignores it unless a MethodOrderer is installed.
+     * Reuse the JUnit 4 method comparator and register {@link TestOrderMethodOrderer} as the default
+     * orderer so JUnit 5 honors the same method order.
+     */
+    private void registerTestOrderMethodOrderer()
+    {
+        Comparator<String> methodComparator = parameters.getRunOrderCalculator().comparatorForTestMethods();
+        if ( methodComparator != null )
+        {
+            TestOrderMethodOrderer.methodComparator = methodComparator;
+            configurationParameters.put( "junit.jupiter.testmethod.order.default",
+                    TestOrderMethodOrderer.class.getName() );
+        }
     }
 
     @Override
@@ -302,7 +320,7 @@ public class JUnitPlatformProvider
         String content = parameters.getProviderProperties().get( CONFIGURATION_PARAMETERS );
         if ( content == null )
         {
-            return emptyMap();
+            return new HashMap<>();
         }
         try ( StringReader reader = new StringReader( content ) )
         {
